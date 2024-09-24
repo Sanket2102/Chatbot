@@ -1,5 +1,9 @@
 import numpy as np
 import pickle
+from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
+from nltk.stem.wordnet import WordNetLemmatizer
+import time
+
 
 #Loading the pickle files
 # tokenizer for one hot encoding
@@ -20,37 +24,6 @@ labels = {value: key for key, value in labels.items()}
 with open("model.pkl","rb") as file:
     model = pickle.load(file)
 
-# prompt from user
-prompt = input("Enter your text: ")
-text = [prompt]
-
-# text preprossesing
-from nltk.stem.wordnet import WordNetLemmatizer
-
-lemmatizer = WordNetLemmatizer()
-corpus = []
-
-review = text[0].lower()
-review = review.split()
-
-review = [lemmatizer.lemmatize(word) for word in review]
-review = ' '.join(review)
-corpus.append(review)
-
-# one hot encoding and padding
-one_hot_repr = tokenizer.texts_to_sequences(text)
-
-from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
-
-sent_length = 15
-padded_doc = pad_sequences(one_hot_repr, padding='pre', maxlen=sent_length)
-
-# model prediction
-predictions = model.predict(padded_doc)
-
-predicted_class = np.argmax(predictions, axis=1)
-a = predicted_class[0]
-intent = labels[a]
 
 responses = {'cancel_order':["To cancel your order, go to your profile, select 'Your Orders', then choose the product you want to cancel. Tap the three dots in the top right and select 'Cancel Order'. If you still face any issue contact us on someone@example.com."],
             'change_order': ["To remove or add items in your order, you can use the update order option. Go to your profile, select 'Your Orders', then tap the three dots in the top right and select 'Update Order'. Please note that you can not add items in your order once the order is dispatched. For more information contact us on someone@example.com"], 
@@ -80,5 +53,75 @@ responses = {'cancel_order':["To cancel your order, go to your profile, select '
             'track_order': ["To track your shipment, go to your profile, select 'Your Orders', then choose the product you want to check shipment status. Click on the three dots on top right and select track my shipment. You will see all the details of your shipment including expected delivery date"], 
             'track_refund': ["To track status of your refund, go to the 'Refund' section in the settings. Then click on 'Track your ticket' and enter your ticket number and submit. You will get all the updates regarding the refund there."]}
 
-print(intent)
-print(responses[intent])
+import streamlit as st
+
+# Function to handle chatbot response
+def chatbot_response(user_input):
+    text = [user_input]
+
+    # text preprossesing
+    lemmatizer = WordNetLemmatizer()
+    corpus = []
+
+    review = text[0].lower()
+    review = review.split()
+
+    review = [lemmatizer.lemmatize(word) for word in review]
+    review = ' '.join(review)
+    corpus.append(review)
+
+    # one hot encoding and padding
+    one_hot_repr = tokenizer.texts_to_sequences(text)
+
+    # pre padding
+    sent_length = 15
+    padded_doc = pad_sequences(one_hot_repr, padding='pre', maxlen=sent_length)
+
+    # model prediction
+    predictions = model.predict(padded_doc)
+
+    predicted_class = np.argmax(predictions, axis=1)
+    a = predicted_class[0]
+    intent = labels[a]
+    bot = responses[intent]
+
+    return bot[0]
+
+# Create a Streamlit interface
+st.title("Chat with your Bot")
+st.write("Type your message and interact with the bot")
+
+#NEW 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    with st.chat_message("assistant"):
+        st.markdown("Hey! How may I help you?")
+    st.session_state.messages.append({"role":"assistant","content":"Hey! How may I help you?"})
+
+    
+
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+
+
+# Accept user input
+if prompt := st.chat_input("Ask your Question"):
+    # Display user message in chat message container
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    bot_response = chatbot_response(prompt)
+
+
+    with st.chat_message("assistant"):
+        st.markdown(bot_response)
+    
+    st.session_state.messages.append({"role": "assistant", "content": bot_response})
+
+
+       
