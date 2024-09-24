@@ -2,10 +2,13 @@ import numpy as np
 import pickle
 from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
 from nltk.stem.wordnet import WordNetLemmatizer
-import time
 
+# Downloading wordnet from nltk
+import nltk
+nltk.download("wordnet")
 
 #Loading the pickle files
+
 # tokenizer for one hot encoding
 with open('./pickles/tokenizer.pkl', 'rb') as handle:
     tokenizer = pickle.load(handle)
