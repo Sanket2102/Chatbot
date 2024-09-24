@@ -7,11 +7,11 @@ import time
 
 #Loading the pickle files
 # tokenizer for one hot encoding
-with open('tokenizer.pkl', 'rb') as handle:
+with open('./pickles/tokenizer.pkl', 'rb') as handle:
     tokenizer = pickle.load(handle)
 
 # label encoder object for class classification
-with open("label_encoder.pkl","rb") as file:
+with open("./pickles/label_encoder.pkl","rb") as file:
     encoder = pickle.load(file)
 
 # creating label dictionary
@@ -21,7 +21,7 @@ labels = dict(zip(encoder.classes_, range(len(encoder.classes_))))
 labels = {value: key for key, value in labels.items()}
 
 # deep learning model
-with open("model.pkl","rb") as file:
+with open("./pickles/model.pkl","rb") as file:
     model = pickle.load(file)
 
 
