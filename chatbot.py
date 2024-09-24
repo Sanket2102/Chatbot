@@ -2,10 +2,15 @@ import numpy as np
 import pickle
 from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
 from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.corpus import stopwords
+
 
 ## Downloading wordnet from nltk
-# import nltk
+import nltk
 # nltk.download("wordnet")
+
+## Downloading stopwords from nltk
+nltk.download("stopwords")
 
 #Loading the pickle files
 
@@ -69,7 +74,7 @@ def chatbot_response(user_input):
     review = text[0].lower()
     review = review.split()
 
-    review = [lemmatizer.lemmatize(word) for word in review]
+    review = [lemmatizer.lemmatize(word) for word in review if word not in stopwords.words("english")]
     review = ' '.join(review)
     corpus.append(review)
 
