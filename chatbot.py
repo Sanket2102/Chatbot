@@ -3,9 +3,9 @@ import pickle
 from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
 from nltk.stem.wordnet import WordNetLemmatizer
 
-# Downloading wordnet from nltk
-import nltk
-nltk.download("wordnet")
+## Downloading wordnet from nltk
+# import nltk
+# nltk.download("wordnet")
 
 #Loading the pickle files
 
