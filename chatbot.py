@@ -102,8 +102,6 @@ st.write("Type your message and interact with the bot")
 #NEW 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    with st.chat_message("assistant"):
-        st.markdown("Hey! How may I help you?")
     st.session_state.messages.append({"role":"assistant","content":"Hey! How may I help you?"})
 
     
