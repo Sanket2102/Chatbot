@@ -7,7 +7,7 @@ from nltk.corpus import stopwords
 
 ## Downloading wordnet from nltk
 import nltk
-# nltk.download("wordnet")
+nltk.download("wordnet")
 
 ## Downloading stopwords from nltk
 nltk.download("stopwords")
