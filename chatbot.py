@@ -1,3 +1,4 @@
+# importing necessary libraries
 import numpy as np
 import pickle
 from keras._tf_keras.keras.preprocessing.sequence import pad_sequences
@@ -14,25 +15,25 @@ nltk.download("stopwords")
 
 #Loading the pickle files
 
-# tokenizer for one hot encoding
+## tokenizer for one hot encoding
 with open('./pickles/tokenizer.pkl', 'rb') as handle:
     tokenizer = pickle.load(handle)
 
-# label encoder object for class classification
+## label encoder object for class classification
 with open("./pickles/label_encoder.pkl","rb") as file:
     encoder = pickle.load(file)
 
 # creating label dictionary
-
 labels = dict(zip(encoder.classes_, range(len(encoder.classes_))))
 # interchanging key value pairs
 labels = {value: key for key, value in labels.items()}
 
-# deep learning model
+## deep learning model
 with open("./pickles/model.pkl","rb") as file:
     model = pickle.load(file)
 
 
+# Generating a set of responses for every intent
 responses = {'cancel_order':["To cancel your order, go to your profile, select 'Your Orders', then choose the product you want to cancel. Tap the three dots in the top right and select 'Cancel Order'. If you still face any issue contact us on someone@example.com."],
             'change_order': ["To remove or add items in your order, you can use the update order option. Go to your profile, select 'Your Orders', then tap the three dots in the top right and select 'Update Order'. Please note that you can not add items in your order once the order is dispatched. For more information contact us on someone@example.com"], 
             'change_shipping_address': ["To change shipping address, go to your profile, select 'Saved Address', then click on 'add new address'. To make this your default address for future orders, tap on the three dots next to the address and select 'Set as Default'. If you still face any issue contact us on someone@example.com and our support team will reach out to you as soon as possible."],
@@ -61,49 +62,57 @@ responses = {'cancel_order':["To cancel your order, go to your profile, select '
             'track_order': ["To track your shipment, go to your profile, select 'Your Orders', then choose the product you want to check shipment status. Click on the three dots on top right and select track my shipment. You will see all the details of your shipment including expected delivery date"], 
             'track_refund': ["To track status of your refund, go to the 'Refund' section in the settings. Then click on 'Track your ticket' and enter your ticket number and submit. You will get all the updates regarding the refund there."]}
 
-import streamlit as st
 
 # Function to handle chatbot response
 def chatbot_response(user_input):
+    # creating a list object for the user input prompt
     text = [user_input]
 
     # text preprossesing
+
+    ## using lemmatizer by nltk library to mintain uniformity among different word forms for same words
     lemmatizer = WordNetLemmatizer()
+
+    ## creating an empty corpus to contain the text after preprocessing
     corpus = []
 
-    review = text[0].lower()
-    review = review.split()
+    
+    review = text[0].lower()  # converts the prompt into lower case
+    review = review.split()  # split the sentence into word tokens
 
-    review = [lemmatizer.lemmatize(word) for word in review if word not in stopwords.words("english")]
-    review = ' '.join(review)
-    corpus.append(review)
+    review = [lemmatizer.lemmatize(word) for word in review if word not in stopwords.words("english")] # lemmatizes all the words in the prompt and removes stopwords
+    
+    review = ' '.join(review) #joins all the different words in the sentence with a " " (space) between them
+    corpus.append(review) # appends the sentence in the empty corpus
 
     # one hot encoding and padding
-    one_hot_repr = tokenizer.texts_to_sequences(text)
+    one_hot_repr = tokenizer.texts_to_sequences(text)  # encodes the input prompt according to the same formatting as used in the model training
 
     # pre padding
-    sent_length = 15
-    padded_doc = pad_sequences(one_hot_repr, padding='pre', maxlen=sent_length)
+    sent_length = 15    # max length of the array to ensure regularity
+    padded_doc = pad_sequences(one_hot_repr, padding='pre', maxlen=sent_length)     # adds zeros in the start of maintain fixed input dimensions
 
     # model prediction
-    predictions = model.predict(padded_doc)
+    predictions = model.predict(padded_doc)     # using already trained LSTM model for predictions
 
-    predicted_class = np.argmax(predictions, axis=1)
-    a = predicted_class[0]
-    intent = labels[a]
-    bot = responses[intent]
+    predicted_class = np.argmax(predictions, axis=1)    # returns the class with the highest probability
+    a = predicted_class[0]      # assigns the encoded class to a variable
+    intent = labels[a]      # uses the label dictionary to get exact class (i.e class before the encoding)
+    bot = responses[intent]       # store the response according to the intent
 
-    return bot[0]
+    return bot[0]       # returns the bot's response
+
+
+# importing streamlit to make user interface
+import streamlit as st
 
 # Create a Streamlit interface
-st.title("Chat with your Bot")
-st.write("Type your message and interact with the bot")
+st.title("Ask Panda Bot")
+st.write("Type your queries and the AI will assist you.")
 
-#NEW 
+# using conditions to generate a welcome message
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role":"assistant","content":"Hey! How may I help you?"}]
-    # st.session_state.messages.append({"role":"assistant","content":"Hey! How may I help you?"})
-
+    st.session_state.messages = [{"role":"assistant","content":"Hey! I am Panda bot. How may I help you?"}]
     
 
 # Display chat messages from history on app rerun
@@ -121,13 +130,11 @@ if prompt := st.chat_input("Ask your Question"):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
 
+    # Generate the chat response by calling chatbot_response function using user prompt as input
     bot_response = chatbot_response(prompt)
-
-
+    # Display chatbot message in chat message container
     with st.chat_message("assistant"):
         st.markdown(bot_response)
-    
+    # Add chatbot message to chat history
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
-
-
        
